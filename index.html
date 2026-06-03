@@ -315,6 +315,7 @@
 <script>
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSfx(type) {
+        if (audioCtx.state === 'suspended') { audioCtx.resume(); }
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
@@ -330,7 +331,7 @@
         }
     }
 
-    // المصفوفة الكاملة بعد دمج وإضافة الأسئلة النحوية الجديدة بدقة
+    // مصفوفة الأسئلة - تم استكمالها إلى 47 سؤالاً بدقة
     const dataset = [
         { q: "القدرة على اكتشاف معاني المفردات الغريبة من سياقها في النص من أدوات قارئ النص:", opts: ["أ- المعرفة النحوية", "ب- المعرفة المعجمية", "جـ- المعرفة البلاغية"], a: 1 },
         { q: "الإيحاءات التالية: (الظلم والجبروت، ادعاء الألوهية، الغرق، بناء الأهرامات) تدل على المفردة:", opts: ["أ- الاستعمار", "ب- الظلم", "جـ- فرعون"], a: 2 },
@@ -358,8 +359,6 @@
         { q: "البطل في المذكرات الأدبية يكون شخصاً آخر غير الكاتب.", opts: ["صح 👍", "خطأ 👎 (البطل هو الكاتب نفسه)"], a: 1 },
         { q: "العناصر الفنية للوصف الأدبي هي الوصف الحسي والوصف الوجداني.", opts: ["صح 👍", "خطأ 👎"], a: 0 },
         { q: "الاهتمام بوصف الشخصيات والأمكنة والأحداث للتعبير عن الفكرة هي صفة مشتركة بين جميع الفنون الأدبية.", opts: ["صح 👍", "خطأ 👎 (ميزة للقصة والرواية وليست كالشعر)"], a: 1 },
-        
-        // الأسئلة الجديدة المضافة (الاختيار من متعدد)
         { q: "أي من التالي ممنوع من الصرف لسبب أنه علم يشبه الفعل؟", opts: ["أ- أحمد", "ب- أسماء", "جـ- إبراهيم"], a: 0 },
         { q: "علامة جر الممنوع من الصرف إذا لم يكن مضافاً ولا معرفاً بأل هي:", opts: ["أ- الكسرة", "ب- الياء", "جـ- الفتحة"], a: 2 },
         { q: "أي من الجمل التالية تحتوي مفعولاً مطلقاً؟", opts: ["أ- شرحت المسألة شرحاً وافياً", "ب- نقلت الصحيفة الخبر", "جـ- اجتهدت طلباً للنجاح"], a: 0 },
@@ -368,15 +367,209 @@
         { q: "سبب منع كلمة مساجد من الصرف لأنها:", opts: ["أ- صيغة منتهى الجموع", "ب- علم أعجمي", "جـ- آخره ألف ونون زائدتين"], a: 0 },
         { q: "استعمار همزتها همزة وصل بسبب أنها:", opts: ["أ- مصدر رباعي", "ب- ماضي سداسي", "جـ- مصدر سداسي"], a: 2 },
         { q: "المصدر من الفعل أعاد:", opts: ["أ- أعد", "ب- إعادة", "جـ- وعد"], a: 1 },
-        { q: "نوع المتمم المنصوب في جملة حفظت القرآن ليلة العيد:", opts: ["أ- مفعول لأجله", "ب- مفعول مطلق", "جـ- مفعول فيه"], a: 2 },
+        { q: "نوع المتمم المنصوب in جملة حفظت القرآن ليلة العيد:", opts: ["أ- مفعول لأجله", "ب- مفعول مطلق", "جـ- مفعول فيه"], a: 2 },
         { q: "أكملي الجملة بالشكل الصحيح: كافأت الشركة ............", opts: ["أ- أبو العامل", "ب- أبا العامل", "جـ- أبي العامل"], a: 1 },
         { q: "(المضاف) في جملة كن عالماً أو طالب علم:", opts: ["أ- عالماً", "ب- علم", "جـ- طالب"], a: 2 },
         { q: "وصلت إلى ............ متأخراً:", opts: ["أ- المطارِ", "ب- المطارُ", "جـ- المطارَ"], a: 0 },
         { q: "هاجر النبي بصحبة ....... المضاف إليه المناسب هو:", opts: ["أ- أبا بكر", "ب- أبي بكر", "جـ- أبو بكر"], a: 1 },
         { q: "سبب منع حضرموت من الصرف أنها:", opts: ["أ- علم أعجمي", "ب- علم يشبه الفعل", "جـ- مركب تركيب مزجي"], a: 2 },
         { q: "وقف الحاضرون متفرجين، ما تحته خط هنا هو:", opts: ["أ- حال", "ب- تمييز", "جـ- مفعول به"], a: 0 },
-        
-        // الأسئلة الجديدة المضافة (صح أم خطأ)
         { q: "المفعول المطلق هو مصدر منصوب يذكر لتوكيد الفعل أو بيان نوعه أو عدده.", opts: ["صح 👍", "خطأ 👎"], a: 0 },
         { q: "كلمة (أخذ) تبدأ بهمزة وصل لأنها فعل ماضٍ ثلاثي.", opts: ["صح 👍", "خطأ 👎 (تبدأ بهمزة قطع)"], a: 1 },
-        { q: "من الأسماء السماعية كلمة اثنان وهمزتها همزة وصل.", opts:
+        { q: "من الأسماء السماعية كلمة اثنان وهمزتها همزة وصل.", opts: ["صح 👍", "خطأ 👎"], a: 0 },
+        // تم إضافة 3 أسئلة جديدة هنا لتصبح المصفوفة كاملة بـ 47 سؤالاً بدقة
+        { q: "الفعل المضارع من الأفعال الخمسة يرفع بـ:", opts: ["أ- الضمة الظاهرة", "ب- ثبوت النون", "جـ- واو الجماعة"], a: 1 },
+        { q: "الاسم المستثنى بعد (إلا) في جملة: (حضر الطلاب إلا طالباً) حكمه النصب لأنه تام مثبت:", opts: ["صح 👍", "خطأ 👎"], a: 0 },
+        { q: "أي من الكلمات التالية همزتها همزة قطع؟", opts: ["أ- ابن", "ب- اسم", "جـ- أحمد"], a: 2 }
+    ];
+
+    // متغيرات التحكم باللعبة
+    let currentRound = 0;
+    const totalRounds = dataset.length;
+    let scores = [0, 0];
+    let currentTeam = 1; 
+    let currentDegrees = 0;
+    let timerInterval = null;
+    let timeLeft = 10;
+    let isAnswered = false;
+    let roundPoints = 10; // النقاط الافتراضية للجولة
+
+    // تحديث واجهة العداد
+    document.getElementById('round-counter').innerText = `السؤال: 1 / ${totalRounds}`;
+
+    // دالة تدوير العجلة مع تحديد عشوائي للنقاط
+    function spinTheWheel() {
+        if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+        document.getElementById('spin-btn').disabled = true;
+        
+        // توليد حركة تدوير عشوائية
+        const extraDegrees = Math.floor(Math.random() * 360) + 1440; 
+        currentDegrees += extraDegrees;
+        const wheel = document.getElementById('lucky-wheel');
+        wheel.style.transform = `rotate(${currentDegrees}deg)`;
+
+        document.getElementById('event-tag').innerText = "جاري تدوير العجلة وتحديد النقاط... 🔄";
+
+        // مصفوفة لتحديد قيم عشوائية للنقاط بناءً على توقف الروول
+        const potentialPoints = [10, 20, 30, 40];
+        roundPoints = potentialPoints[Math.floor(Math.random() * potentialPoints.length)];
+
+        setTimeout(() => {
+            document.getElementById('event-tag').innerText = `✨ هذا السؤال يعادل [ ${roundPoints} نقطة ]!  ✨`;
+            activateQuiz();
+        }, 3000);
+    }
+
+    // تفعيل نافذة السؤال والمؤقت بعد انتهاء الدوران
+    function activateQuiz() {
+        isAnswered = false;
+        const card = document.getElementById('quiz-card');
+        card.classList.add('active-quiz');
+        
+        const timerZone = document.getElementById('timer-container');
+        timerZone.style.opacity = "1";
+
+        // عرض السؤال والخيارات
+        const currentData = dataset[currentRound];
+        document.getElementById('target-q').innerText = currentData.q;
+        
+        const optsContainer = document.getElementById('target-opts');
+        optsContainer.innerHTML = '';
+
+        currentData.opts.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index, btn);
+            optsContainer.appendChild(btn);
+        });
+
+        // تشغيل المؤقت (10 ثوانٍ)
+        timeLeft = 10;
+        const timerBox = document.getElementById('timer-box');
+        timerBox.innerText = timeLeft;
+        timerBox.classList.remove('danger');
+
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timerBox.innerText = timeLeft;
+            if (timeLeft <= 3) {
+                timerBox.classList.add('danger');
+            }
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                lockOptionsDueToTimeout();
+            }
+        }, 1000);
+    }
+
+    // التحقق من الإجابة
+    function checkAnswer(selectedIndex, selectedBtn) {
+        if (isAnswered) return;
+        isAnswered = true;
+        clearInterval(timerInterval);
+
+        const currentData = dataset[currentRound];
+        const allButtons = document.querySelectorAll('.opt-btn');
+
+        // قفل جميع الأزرار
+        allButtons.forEach(btn => btn.disabled = true);
+
+        if (selectedIndex === currentData.a) {
+            // إجابة صحيحة
+            selectedBtn.classList.add('correct-glow');
+            playSfx('correct');
+            scores[currentTeam - 1] += roundPoints; // إضافة النقاط المتغيرة المكتسبة من العجلة
+            document.getElementById(`score-${currentTeam}`).innerText = scores[currentTeam - 1];
+        } else {
+            // إجابة خاطئة
+            selectedBtn.classList.add('wrong-glow');
+            allButtons[currentData.a].classList.add('correct-glow'); // إظهار الإجابة الصحيحة
+            playSfx('wrong');
+        }
+
+        // إظهار زر الانتقال للتالي
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    // انتهاء الوقت دون إجابة
+    function lockOptionsDueToTimeout() {
+        if (isAnswered) return;
+        isAnswered = true;
+        
+        const currentData = dataset[currentRound];
+        const allButtons = document.querySelectorAll('.opt-btn');
+
+        allButtons.forEach(btn => btn.disabled = true);
+        allButtons[currentData.a].classList.add('correct-glow'); // تلوين الإجابة الصحيحة بالأخضر
+        playSfx('wrong');
+
+        document.getElementById('event-tag').innerText = "انتهى الوقت! ⏰";
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    // الانتقال للجولة التالية وتبادل الأدوار
+    function nextRound() {
+        currentRound++;
+        
+        // إخفاء زر "التالي"
+        document.getElementById('next-btn').style.display = 'none';
+
+        // إعادة تصفير واجهة السؤال والمؤقت
+        const card = document.getElementById('quiz-card');
+        card.classList.remove('active-quiz');
+        document.getElementById('target-q').innerText = "السؤال مغلق.. قم بتدوير العجلة أولاً 🔒";
+        document.getElementById('target-opts').innerHTML = '';
+        document.getElementById('timer-container').style.opacity = "0.2";
+        document.getElementById('timer-box').innerText = "10";
+        document.getElementById('timer-box').classList.remove('danger');
+
+        // التحقق من نهاية اللعبة
+        if (currentRound >= totalRounds) {
+            endGame();
+            return;
+        }
+
+        // تحديث العداد
+        document.getElementById('round-counter').innerText = `السؤال: ${currentRound + 1} / ${totalRounds}`;
+
+        // تبديل دور الفريق
+        currentTeam = currentTeam === 1 ? 2 : 1;
+        document.getElementById('box-T1').classList.toggle('active-turn', currentTeam === 1);
+        document.getElementById('box-T2').classList.toggle('active-turn', currentTeam === 2);
+
+        // إعادة تفعيل زر التدوير للجولة الجديدة
+        document.getElementById('spin-btn').disabled = false;
+        document.getElementById('event-tag').innerText = `دور الفريق ${currentTeam === 1 ? 'الأول' : 'الثاني'} لتدوير العجلة! 🎡`;
+    }
+
+    // إنهاء اللعبة وإعلان الفائز
+    function endGame() {
+        document.getElementById('wheel-zone').style.display = 'none';
+        document.getElementById('timer-container').style.display = 'none';
+        document.getElementById('quiz-arena').style.display = 'none';
+        document.getElementById('panel-zone').style.display = 'none';
+
+        const endZone = document.getElementById('end-zone');
+        endZone.style.display = 'block';
+
+        const banner = document.getElementById('winner-banner');
+        if (scores[0] > scores[1]) {
+            banner.innerHTML = `🏆 الفائز هو: <span style="color:var(--team1-color)">الفريق الأول</span> بـ ${scores[0]} نقطة!`;
+            triggerConfetti();
+        } else if (scores[1] > scores[0]) {
+            banner.innerHTML = `🏆 الفائز هو: <span style="color:var(--team2-color)">الفريق الثاني</span> بـ ${scores[1]} نقطة!`;
+            triggerConfetti();
+        } else {
+            banner.innerHTML = `🤝 تعادل رائع بين الفريقين بـ ${scores[0]} نقطة لكل منهما!`;
+        }
+    }
+
+    // تأثير الاحتفال
+    function triggerConfetti() {
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+    }
+</script>
+</body>
+</html>
