@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>البطولة التفاعلية الكبرى 🎡</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg-cozy: #f4f7f6;
+            --card-pure: #ffffff;
+            --team1-color: #3182ce;
+            --team2-color: #dd6b20;
+            --mint-green: #38a169;
+            --crimson: #e53e3e;
+            --gold: #d69e2e;
+            --text-dark: #2d3748;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-cozy);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-wrapper {
+            width: 100%;
+            max-width: 850px;
+            background: var(--card-pure);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+            position: relative;
+            text-align: center;
+        }
+
+        /* لوحة النقاط */
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 20px;
+        }
+
+        .team-display {
+            flex: 1;
+            padding: 15px;
+            border-radius: 15px;
+            background: #fff;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 3px solid transparent;
+        }
+
+        .team-1 { color: var(--team1-color); }
+        .team-2 { color: var(--team2-color); }
+
+        .team-display.active-turn {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: currentColor;
+        }
+
+        .score-num {
+            font-size: 3rem;
+            font-weight: 900;
+        }
+
+        /* عجلة الحظ */
+        .wheel-container {
+            margin: 20px 0;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .wheel-graphic {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            border: 8px solid #cbd5e0;
+            background: conic-gradient(
+                var(--team1-color) 0deg 90deg, 
+                var(--gold) 90deg 180deg, 
+                var(--team2-color) 180deg 270deg, 
+                var(--mint-green) 270deg 360deg
+            );
+            transition: transform 3s cubic-bezier(0.1, 0.8, 0.1, 1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        .wheel-pointer {
+            width: 0; 
+            height: 0; 
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 20px solid #2d3748;
+            position: absolute;
+            top: -10px;
+            z-index: 10;
+        }
+
+        .event-badge {
+            margin-top: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding: 8px 25px;
+            background: #e2e8f0;
+            border-radius: 50px;
+            display: inline-block;
+        }
+
+        /* المؤقت الرقمي الدائري المستعاد */
+        .timer-zone {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            opacity: 0.2; /* خافت حتى تبدأ الجولة */
+            transition: opacity 0.3s;
+        }
+
+        .countdown-circle {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            border: 3px solid #cbd5e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--mint-green);
+            background: #ffffff;
+            transition: all 0.2s;
+        }
+
+        .countdown-circle.danger {
+            color: var(--crimson);
+            border-color: var(--crimson);
+            animation: flash 0.4s infinite alternate;
+        }
+
+        @keyframes flash {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        /* ساحة العرض والأسئلة */
+        .arena-card {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 15px;
+            opacity: 0.4; 
+            pointer-events: none; 
+            transition: all 0.4s ease;
+        }
+
+        .arena-card.active-quiz {
+            opacity: 1;
+            pointer-events: auto;
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .question-text {
+            font-size: 1.6rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        .options-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-layout { grid-template-columns: 1fr; }
+        }
+
+        .opt-btn {
+            background: var(--card-pure);
+            border: 2px solid #e2e8f0;
+            padding: 18px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: right;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .opt-btn:hover:not([disabled]) {
+            transform: scale(1.02);
+            border-color: #cbd5e0;
+            background: #f7fafc;
+        }
+
+        .opt-btn.correct-glow {
+            background-color: var(--mint-green) !important;
+            color: #fff !important;
+            border-color: var(--mint-green);
+            box-shadow: 0 0 15px rgba(56, 161, 105, 0.4);
+        }
+
+        .opt-btn.wrong-glow {
+            background-color: var(--crimson) !important;
+            color: #fff !important;
+            border-color: var(--crimson);
+            box-shadow: 0 0 15px rgba(229, 62, 62, 0.4);
+        }
+
+        /* أزرار التحكم السفلية */
+        .control-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .master-btn {
+            background: var(--text-dark);
+            color: #fff;
+            border: none;
+            padding: 14px 40px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .master-btn:hover:not([disabled]) {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        .master-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        .spin-action-btn {
+            background: linear-gradient(135deg, var(--team1-color), #4c51bf);
+            background-color: var(--team1-color);
+            color: white;
+            box-shadow: 0 5px 15px rgba(49, 130, 206, 0.4);
+        }
+
+        .end-celebration {
+            display: none;
+            padding: 40px 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper">
+    <div class="scoreboard">
+        <div class="team-display team-1 active-turn" id="box-T1">
+            <div style="font-size: 1.2rem; font-weight: bold;">الفريق الأول 🚀</div>
+            <div class="score-num" id="score-1">0</div>
+        </div>
+        <div style="font-size: 1.5rem; font-weight: bold; color: #a0aec0; margin: 0 15px;">ضد</div>
+        <div class="team-display team-2" id="box-T2">
+            <div style="font-size: 1.2rem; font-weight: bold;">الفريق الثاني 🔥</div>
+            <div class="score-num" id="score-2">0</div>
+        </div>
+    </div>
+
+    <div class="wheel-container" id="wheel-zone">
+        <div class="wheel-pointer"></div>
+        <div class="wheel-graphic" id="lucky-wheel"></div>
+        <div class="event-badge" id="event-tag">اضغط على زر التدوير بالأسفل لبدء التحدي! 🎰</div>
+    </div>
+
+    <div class="timer-zone" id="timer-container">
+        <div class="countdown-circle" id="timer-box">10</div>
+    </div>
+
+    <div id="quiz-arena">
+        <div class="arena-card" id="quiz-card">
+            <div class="question-text" id="target-q">السؤال مغلق.. قم بتدوير العجلة أولاً 🔒</div>
+            <div class="options-layout" id="target-opts"></div>
+        </div>
+    </div>
+
+    <div class="end-celebration" id="end-zone">
+        <h1 style="font-size: 3rem; color: var(--mint-green);">🎉 انتهاء الملحمة اللغوية 🎉</h1>
+        <div id="winner-banner" style="font-size: 1.8rem; margin: 25px 0; font-weight: bold;"></div>
+        <button class="master-btn" onclick="location.reload()">جولة تحدي جديدة 🔄</button>
+    </div>
+
+    <div class="control-panel" id="panel-zone">
+        <div id="round-counter" style="color: #718096; font-weight: bold; font-size: 1.1rem;">السؤال: 1 / 22</div>
+        <button class="master-btn spin-action-btn" id="spin-btn" onclick="spinTheWheel()">دور العجلة الآن 🎡</button>
+        <button class="master-btn" id="next-btn" onclick="nextRound()" style="display: none;">السؤال التالي ⭠</button>
+    </div>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSfx(type) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        if (type === 'correct') {
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); 
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        } else {
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+        }
+    }
+
+    const dataset = [
+        { q: "من مهارات القارئ الجيد أثناء فهم النص:", opts: ["تجاهل التفاصيل والتركيز على العنوان فقط", "الربط بين الأفكار واستنتاج المعنى العام", "قراءة الكلمات دون محاولة تفسيرها"], a: 1 },
+        { q: "تعتمد المذكرات الأدبية على:", opts: ["سرد أحداث خيالية بالكامل", "تسجيل تجارب شخصية واقعية بلغة أدبية", "كتابة معلومات علمية مباشرة دون مشاعر"], a: 1 },
+        { q: "الترابط بين الجمل والفقرات يساعد على جعل النص أكثر وضوحًا وتماسكًا.", opts: ["صح 👍", "خطأ 👎"], a: 0 },
+        { q: "من عناصر القصة: الفكرة العامة فقط دون الحاجة لوجود شخصيات أو أحداث.", opts: ["صح 👍", "خطأ 👎"], a: 1 },
+        { q: "القدرة على اكتشاف معاني المفردات الغريبة من سياقها في النص تشير إلى؟", opts: ["المعرفة المعجمية", "المعرفة النحوية", "المعرفة البلاغية"], a: 0 },
+        { q: "ما الفرق الجوهري الفاصل بين القصة والمذكرات الأدبية؟", opts: ["القصة حقيقية والكاتب بطلها، والمذكرات خيالية تماماً.", "القصة شخصيتها قد تكون أي شخص وتدمج الخيال، والمذكرات كاتبها هو البطل وأحداثها واقعية.", "المذكرات تشترط الخيال التام بينما القصة واقعية حرفية."], a: 1 },
+        { q: "ما المقصود بعملية استطلاع النص في القراءة؟", opts: ["قراءة النفس الواحد", "تحليل البنية البلاغية للنص", "البحث والتقصي المعجمي"], a: 0 },
+        { q: "الشخصيات، الأحداث، الزمان والمكان هي الركائز الأساسية الفنية لِـ:", opts: ["المقال الأدبي", "الشعر العمودي", "القصة الأدبية"], a: 2 },
+        { q: "استخدام الكلمة في غير معناها الحقيقي لعلاقة غير المشابهة أو بقرينة تسمى:", opts: ["الكناية", "المجاز", "الاستعارة"], a: 1 },
+        { q: "هل الاستعارة في حقيقتها تشبيه بليغ حُذف منه أحد طرفيه (المشبه أو المشبه به)؟", opts: ["نعم، عبارة صحيحة", "لا، عبارة خاطئة"], a: 0 },
+        { q: "البلاغة تمكن الأديب من إيضاح فكرته وإحداث التأثير الوجداني العالي في المتلقي.", opts: ["صح 👍", "خطأ 👎"], a: 0 },
+        { q: "الكناية هي استخدام كلمتين متشابهتين في اللفظ ومختلفتين تماماً في المعنى.", opts: ["صح", "خطأ (هذا هو الجناس وليس الكناية)"], a: 1 },
+        { q: "أي الفنون التالية يمثل 'الموسيقا اللفظية' الصاخبة في البنية البلاغية للنص؟", opts: ["التشبيه والاستعارة والكناية البيانية", "الوزن الشعري، والقوافي، والسجع، والجناس", "تفكيك العلاقات النحوية والإعرابية للمفردات", "دراسة سيرة الأديب وبيئته المحيطة"], a: 1 },
+        { q: "ما الخطوة القتالية في قراءة النص التي تتضمن 'القراءة الصامتة السريعة دون توقف'؟", opts: ["قراءة النفس الواحد (استطلاع النص)", "القراءة حول النص والمصادر", "قراءة متأنية للفهم والتفسير العميق", "قراءة متأنية للتحليل والنقد"], a: 0 },
+        { q: "إذا انطلق القارئ في البحث عن رموز ومصطلحات غامضة تحتاج لمراجع خارجية، فهو يطبق:", opts: ["استطلاع النص الأولي", "القراءة حول النص (البحث والمراجعة)", "تحليل البنية البلاغية الجمالية", "تحليل المحتوى الثقافي المباشر"], a: 1 },
+        { q: "للكلمات ظلال وإيحاءات، ما الإيحاء البلاغي العارم الذي تتركه كلمة 'فرعون' بالوجدان؟", opts: ["الرحمة واللين والطمأنينة", "الولاء والتضحية الوطنية", "الظلم والجبروت العاتي وادعاء الألوهية", "الذكاء الحاد والتفوق العلمي"], a: 2 },
+        { q: "في قول الأديب: 'الأدب عندي هو أساس الحضارة؛ لأنه الفكر...'، ما الرابط اللفظي لكلمة (لأنه)؟", opts: ["التوكيد والتشديد", "التعليل وبيان الأسباب", "الاستدراك والعدول عن الفكرة", "التصحيح اللغوي"], a: 1 },
+        { q: "ما هي المقومات البنائية المميزة لفن 'القصة' عن بقية الفنون النثرية؟", opts: ["مقدمة شيقة، عرض مفصل، خاتمة حاسمة", "شخصيات، وأحداث، وزمان، ومكان، وفكرة عامة", "وصف وجداني ذاتي ووصف حسي للمشاهد", "الحوار الحاد والاشتباك المباشر فقط"], a: 1 },
+        { q: "ما الورقة الرابحة والفريدة التي ينفرد بها 'الشعر' تمايزاً عن القصة والمسرح? ", opts: ["الاعتناء الفائق بجماليات اللغة والأسلوب", "التعبير الصادق عن الأشياء والظواهر المحيطة", "المحافظة الصارمة على إيقاع (وزن وقافية) ينتظم النص كاملاً", "ضخ معلومات حقيقية تخدم المجتمع والأفراد"], a: 2 },
+        { q: "في عتاب بليغ: 'إنني ما أحدثت نبوة، إلا بعد أن أحدثت جفوة'، ما الفن البديعي النغامي هنا؟", opts: ["الاستعارة المكنية", "السجع المتوازي للفواصل", "الكناية عن صفة", "المجاز المرسل"], a: 1 },
+        { q: "قال المعري: 'ولا تجلس إلى أهل الدنايا...'؛ ما الغرض البلاغي الحقيقي الكامن وراء النهي؟", opts: ["الدعاء والتضرع", "الإباحة والتخيير", "النصيحة والإرشاد والتوعية الحكيمة", "التهديد والوعيد السافر"], a: 2 },
+        { q: "حينما يوظف غازي القصيبي ألفاظاً مثل (الواحات، الخيام، الجمل) فهو يستدعي صراحة إيحاءات:", opts: ["البيئة البحرية الساحلية", "البيئة الصحراوية العريقة", "البيئة الجبلية الوعرة", "البيئة الحضرية المدنية"], a: 1 }
+    ];
+
+    const eventsList = [
+        { txt: "🔥 تحدي السرعة (10 ثوانٍ والمضاعف!)", multiplier: 20 },
+        { txt: "🎯 سؤال ذهبي بـ 15 نقطة!", multiplier: 15 },
+        { txt: "⚡ صدمة خاطفة بـ 10 نقاط!", multiplier: 10 },
+        { txt: "💎 فرصة ماسية بـ 20 نقطة!", multiplier: 20 }
+    ];
+
+    let rIdx = 0, pts1 = 0, pts2 = 0, turn = '1', timer, sec = 10, answered = false, currentValue = 10;
+    let currentRotation = 0;
+
+    function spinTheWheel() {
+        document.getElementById('spin-btn').disabled = true;
+        
+        const addRotation = Math.floor(Math.random() * 360) + 1440; 
+        currentRotation += addRotation;
+        const wheel = document.getElementById('lucky-wheel');
+        wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+        const currentEvent = eventsList[Math.floor(Math.random() * eventsList.length)];
+        currentValue = currentEvent.multiplier;
+        document.getElementById('event-tag').innerText = "جاري اختيار الفعالية... 🎲";
+
+        setTimeout(() => {
+            document.getElementById('event-tag').innerText = currentEvent.txt;
+            unlockAndRenderQuestion();
+        }, 3000); 
+    }
+
+    function unlockAndRenderQuestion() {
+        document.getElementById('quiz-card').classList.add('active-quiz');
+        document.getElementById('timer-container').style.opacity = '1';
+
+        const data = dataset[rIdx];
+        document.getElementById('target-q').innerText = data.q;
+        const optsLayout = document.getElementById('target-opts');
+        optsLayout.innerHTML = '';
+
+        data.opts.forEach((o, i) => {
+            const b = document.createElement('button');
+            b.className = 'opt-btn';
+            b.innerText = o;
+            b.onclick = () => verify(i, b);
+            optsLayout.appendChild(b);
+        });
+
+        triggerCountdownTimer();
+    }
+
+    function triggerCountdownTimer() {
+        clearInterval(timer);
+        sec = 10;
+        const timerBox = document.getElementById('timer-box');
+        timerBox.innerText = sec;
+        timerBox.className = 'countdown-circle';
+
+        timer = setInterval(() => {
+            sec--;
+            timerBox.innerText = sec;
+
+            if (sec <= 3) {
+                timerBox.classList.add('danger');
+            }
+
+            if (sec <= 0) {
+                clearInterval(timer);
+                lockOut();
+            }
+        }, 1000);
+    }
+
+    function verify(selected, element) {
+        if (answered) return;
+        answered = true;
+        clearInterval(timer);
+
+        const correct = dataset[rIdx].a;
+        const btns = document.querySelectorAll('.opt-btn');
+        btns.forEach(b => b.disabled = true);
+
+        if (selected === correct) {
+            element.classList.add('correct-glow');
+            playSfx('correct');
+            if (turn === '1') {
+                pts1 += currentValue;
+                document.getElementById('score-1').innerText = pts1;
+            } else {
+                pts2 += currentValue;
+                document.getElementById('score-2').innerText = pts2;
+            }
+        } else {
+            element.classList.add('wrong-glow');
+            btns[correct].classList.add('correct-glow');
+            playSfx('wrong');
+        }
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function lockOut() {
+        answered = true;
+        playSfx('wrong');
+        const correct = dataset[rIdx].a;
+        const btns = document.querySelectorAll('.opt-btn');
+        btns.forEach(b => b.disabled = true);
+        if(btns[correct]) btns[correct].classList.add('correct-glow');
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function nextRound() {
+        rIdx++;
+        if (rIdx < dataset.length) {
+            turn = (turn === '1') ? '2' : '1';
+            document.getElementById('box-T1').className = `team-display team-1 ${turn === '1' ? 'active-turn' : ''}`;
+            document.getElementById('box-T2').className = `team-display team-2 ${turn === '2' ? 'active-turn' : ''}`;
+            
+            answered = false;
+            document.getElementById('quiz-card').classList.remove('active-quiz');
+            document.getElementById('timer-container').style.opacity = '0.2';
+            
+            const timerBox = document.getElementById('timer-box');
+            timerBox.innerText = "10";
+            timerBox.className = 'countdown-circle';
+
+            document.getElementById('target-q').innerText = "السؤال مغلق.. قم بتدوير العجلة أولاً 🔒";
+            document.getElementById('target-opts').innerHTML = '';
+            document.getElementById('event-tag').innerText = "اضغط على زر التدوير بالأسفل لبدء التحدي! 🎰";
+            document.getElementById('round-counter').innerText = `السؤال: ${rIdx + 1} / ${dataset.length}`;
+            
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('spin-btn').disabled = false;
+            document.getElementById('spin-btn').style.display = 'block';
+        } else {
+            endGame();
+        }
+    }
+
+    function endGame() {
+        document.getElementById('quiz-arena').style.display = 'none';
+        document.getElementById('wheel-zone').style.display = 'none';
+        document.getElementById('timer-container').style.display = 'none';
+        document.getElementById('panel-zone').style.display = 'none';
+        
+        const zone = document.getElementById('end-zone');
+        const banner = document.getElementById('winner-banner');
+        zone.style.display = 'block';
+
+        confetti({ particleCount: 200, spread: 90, origin: { y: 0.5 } });
+
+        if (pts1 > pts2) {
+            banner.innerHTML = `🏆 الفائز بالصدارة والمجد: <span style="color:var(--team1-color)">الفريق الأول</span> بـ ${pts1} نقطة!`;
+        } else if (pts2 > pts1) {
+            banner.innerHTML = `🏆 الفائز بالصدارة والمجد: <span style="color:var(--team2-color)">الفريق الثاني</span> بـ ${pts2} نقطة!`;
+        } else {
+            banner.innerHTML = `🤝 تعادل أسطوري ومذهل بـ ${pts1} لكل فريق!`;
+        }
+    }
+</script>
+
+</body>
+</html>
