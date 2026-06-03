@@ -306,7 +306,7 @@
     </div>
 
     <div class="control-panel" id="panel-zone">
-        <div id="round-counter" style="color: #718096; font-weight: bold; font-size: 1.1rem;">السؤال: 1 / 26</div>
+        <div id="round-counter" style="color: #718096; font-weight: bold; font-size: 1.1rem;">السؤال: 1 / 47</div>
         <button class="master-btn spin-action-btn" id="spin-btn" onclick="spinTheWheel()">دور العجلة الآن 🎡</button>
         <button class="master-btn" id="next-btn" onclick="nextRound()" style="display: none;">السؤال التالي ⭠</button>
     </div>
@@ -330,7 +330,7 @@
         }
     }
 
-    // المصفوفة الجديدة بعد إزالة التكرار ودمج أسئلة الصح والخطأ والاختياري بالكامل
+    // المصفوفة الكاملة بعد دمج وإضافة الأسئلة النحوية الجديدة بدقة
     const dataset = [
         { q: "القدرة على اكتشاف معاني المفردات الغريبة من سياقها في النص من أدوات قارئ النص:", opts: ["أ- المعرفة النحوية", "ب- المعرفة المعجمية", "جـ- المعرفة البلاغية"], a: 1 },
         { q: "الإيحاءات التالية: (الظلم والجبروت، ادعاء الألوهية، الغرق، بناء الأهرامات) تدل على المفردة:", opts: ["أ- الاستعمار", "ب- الظلم", "جـ- فرعون"], a: 2 },
@@ -351,171 +351,32 @@
         { q: "أن تحلل أجزاء الموصوف الرئيسة إلى أجزاء فرعية من:", opts: ["أ- طرق الوصف", "ب- خطوات كتابة المذكرة", "جـ- خطوات كتابة الوصف"], a: 2 },
         { q: "الخطوة الثالثة من خطوات كتابة المذكرات الأدبية هي:", opts: ["أ- حدد المدة الزمنية التي ستتحدث عنها", "ب- استبعد الأحداث غير المهمة", "جـ- ابدأ بسرد الأحداث وتصوير المواقف"], a: 2 },
         { q: "ما يفعله أشخاص القصة أو يحدث لهم حسياً أو وجدانياً وغالباً تكون متخيلة أو معدلة من الواقع هي:", opts: ["أ- الأحداث", "ب- الزمان والمكان", "جـ- الفكرة"], a: 0 },
-        { q: "الأحداث في المذكرات الأدبية دائماً تكون:", opts: ["أ- خيالية", "ب- واقعية", "جـ- لا شيء مما سبق"], a: 1 },
+        { q: "الأحداث في المذكرات الأدبية دائماً تكون:", opts: ["أ- واقعية", "ب- خيالية", "جـ- لا شيء مما سبق"], a: 0 },
         { q: "القيمة الفنية لكتابة المذكرات الأدبية هي:", opts: ["أ- سجل للأحداث التي تعرض لها الكاتب", "ب- الاستفادة من التجارب والخبرات", "جـ- جميع ما سبق"], a: 2 },
         { q: "المحافظة على إيقاع (وزن) محدد ينتظم به النص جميعه صفة مشتركة بين جميع الفنون الأدبية.", opts: ["صح 👍", "خطأ 👎 (خاص بالشعر فقط)"], a: 1 },
         { q: "قال تعالى: «وَكُلُوا وَاشْرَبُوا حَتَّىٰ يَتَبَيَّنَ لَكُمُ الْخَيْطُ الْأَبْيَضُ مِنَ الْخَيْطِ الْأَسْوَدِ مِنَ الْفَجْرِ»\nمعنى الأمر هنا هو الإباحة.", opts: ["صح 👍", "خطأ 👎"], a: 0 },
         { q: "البطل في المذكرات الأدبية يكون شخصاً آخر غير الكاتب.", opts: ["صح 👍", "خطأ 👎 (البطل هو الكاتب نفسه)"], a: 1 },
         { q: "العناصر الفنية للوصف الأدبي هي الوصف الحسي والوصف الوجداني.", opts: ["صح 👍", "خطأ 👎"], a: 0 },
-        { q: "الاهتمام بوصف الشخصيات والأمكنة والأحداث للتعبير عن الفكرة هي صفة مشتركة بين جميع الفنون الأدبية.", opts: ["صح 👍", "خطأ 👎 (ميزة للقصة والرواية وليست كالشعر)"], a: 1 }
-    ];
-
-    const eventsList = [
-        { txt: "🔥 تحدي السرعة (10 ثوانٍ والمضاعف!)", multiplier: 20 },
-        { txt: "🎯 سؤال ذهبي بـ 15 نقطة!", multiplier: 15 },
-        { txt: "⚡ صدمة خاطفة بـ 10 نقاط!", multiplier: 10 },
-        { txt: "💎 فرصة ماسية بـ 20 نقطة!", multiplier: 20 }
-    ];
-
-    let rIdx = 0, pts1 = 0, pts2 = 0, turn = '1', timer, sec = 10, answered = false, currentValue = 10;
-    let currentRotation = 0;
-
-    function spinTheWheel() {
-        document.getElementById('spin-btn').disabled = true;
+        { q: "الاهتمام بوصف الشخصيات والأمكنة والأحداث للتعبير عن الفكرة هي صفة مشتركة بين جميع الفنون الأدبية.", opts: ["صح 👍", "خطأ 👎 (ميزة للقصة والرواية وليست كالشعر)"], a: 1 },
         
-        const addRotation = Math.floor(Math.random() * 360) + 1440; 
-        currentRotation += addRotation;
-        const wheel = document.getElementById('lucky-wheel');
-        wheel.style.transform = `rotate(${currentRotation}deg)`;
-
-        const currentEvent = eventsList[Math.floor(Math.random() * eventsList.length)];
-        currentValue = currentEvent.multiplier;
-        document.getElementById('event-tag').innerText = "جاري اختيار الفعالية... 🎲";
-
-        setTimeout(() => {
-            document.getElementById('event-tag').innerText = currentEvent.txt;
-            unlockAndRenderQuestion();
-        }, 3000); 
-    }
-
-    function unlockAndRenderQuestion() {
-        document.getElementById('quiz-card').classList.add('active-quiz');
-        document.getElementById('timer-container').style.opacity = '1';
-
-        const data = dataset[rIdx];
-        document.getElementById('target-q').innerText = data.q;
-        const optsLayout = document.getElementById('target-opts');
-        optsLayout.innerHTML = '';
-
-        data.opts.forEach((o, i) => {
-            const b = document.createElement('button');
-            b.className = 'opt-btn';
-            b.innerText = o;
-            b.onclick = () => verify(i, b);
-            optsLayout.appendChild(b);
-        });
-
-        triggerCountdownTimer();
-    }
-
-    function triggerCountdownTimer() {
-        clearInterval(timer);
-        sec = 10;
-        const timerBox = document.getElementById('timer-box');
-        timerBox.innerText = sec;
-        timerBox.className = 'countdown-circle';
-
-        timer = setInterval(() => {
-            sec--;
-            timerBox.innerText = sec;
-
-            if (sec <= 3) {
-                timerBox.classList.add('danger');
-            }
-
-            if (sec <= 0) {
-                clearInterval(timer);
-                lockOut();
-            }
-        }, 1000);
-    }
-
-    function verify(selected, element) {
-        if (answered) return;
-        answered = true;
-        clearInterval(timer);
-
-        const correct = dataset[rIdx].a;
-        const btns = document.querySelectorAll('.opt-btn');
-        btns.forEach(b => b.disabled = true);
-
-        if (selected === correct) {
-            element.classList.add('correct-glow');
-            playSfx('correct');
-            if (turn === '1') {
-                pts1 += currentValue;
-                document.getElementById('score-1').innerText = pts1;
-            } else {
-                pts2 += currentValue;
-                document.getElementById('score-2').innerText = pts2;
-            }
-        } else {
-            element.classList.add('wrong-glow');
-            btns[correct].classList.add('correct-glow');
-            playSfx('wrong');
-        }
-        document.getElementById('next-btn').style.display = 'block';
-    }
-
-    function lockOut() {
-        answered = true;
-        playSfx('wrong');
-        const correct = dataset[rIdx].a;
-        const btns = document.querySelectorAll('.opt-btn');
-        btns.forEach(b => b.disabled = true);
-        if(btns[correct]) btns[correct].classList.add('correct-glow');
-        document.getElementById('next-btn').style.display = 'block';
-    }
-
-    function nextRound() {
-        rIdx++;
-        if (rIdx < dataset.length) {
-            turn = (turn === '1') ? '2' : '1';
-            document.getElementById('box-T1').className = `team-display team-1 ${turn === '1' ? 'active-turn' : ''}`;
-            document.getElementById('box-T2').className = `team-display team-2 ${turn === '2' ? 'active-turn' : ''}`;
-            
-            answered = false;
-            document.getElementById('quiz-card').classList.remove('active-quiz');
-            document.getElementById('timer-container').style.opacity = '0.2';
-            
-            const timerBox = document.getElementById('timer-box');
-            timerBox.innerText = "10";
-            timerBox.className = 'countdown-circle';
-
-            document.getElementById('target-q').innerText = "السؤال مغلق.. قم بتدوير العجلة أولاً 🔒";
-            document.getElementById('target-opts').innerHTML = '';
-            document.getElementById('event-tag').innerText = "اضغط على زر التدوير بالأسفل لبدء التحدي! 🎰";
-            document.getElementById('round-counter').innerText = `السؤال: ${rIdx + 1} / ${dataset.length}`;
-            
-            document.getElementById('next-btn').style.display = 'none';
-            document.getElementById('spin-btn').disabled = false;
-            document.getElementById('spin-btn').style.display = 'block';
-        } else {
-            endGame();
-        }
-    }
-
-    function endGame() {
-        document.getElementById('quiz-arena').style.display = 'none';
-        document.getElementById('wheel-zone').style.display = 'none';
-        document.getElementById('timer-container').style.display = 'none';
-        document.getElementById('panel-zone').style.display = 'none';
+        // الأسئلة الجديدة المضافة (الاختيار من متعدد)
+        { q: "أي من التالي ممنوع من الصرف لسبب أنه علم يشبه الفعل؟", opts: ["أ- أحمد", "ب- أسماء", "جـ- إبراهيم"], a: 0 },
+        { q: "علامة جر الممنوع من الصرف إذا لم يكن مضافاً ولا معرفاً بأل هي:", opts: ["أ- الكسرة", "ب- الياء", "جـ- الفتحة"], a: 2 },
+        { q: "أي من الجمل التالية تحتوي مفعولاً مطلقاً؟", opts: ["أ- شرحت المسألة شرحاً وافياً", "ب- نقلت الصحيفة الخبر", "جـ- اجتهدت طلباً للنجاح"], a: 0 },
+        { q: "في قوله تعالى: {إني رأيت أحد عشر كوكباً} ماذا يعرب الاسم كوكباً؟", opts: ["أ- حال", "ب- مفعول به", "جـ- تمييز"], a: 2 },
+        { q: "عند إضافة المثنى أو جمع المذكر السالم مثل (معلمون + المدرسة) ماذا يحدث للنون؟", opts: ["أ- تبقى كما هي (معلمون المدرسة)", "ب- تحذف النون بسبب الإضافة (معلمو المدرسة)", "جـ- تقلب النون ميماً (معلموم المدرسة)"], a: 1 },
+        { q: "سبب منع كلمة مساجد من الصرف لأنها:", opts: ["أ- صيغة منتهى الجموع", "ب- علم أعجمي", "جـ- آخره ألف ونون زائدتين"], a: 0 },
+        { q: "استعمار همزتها همزة وصل بسبب أنها:", opts: ["أ- مصدر رباعي", "ب- ماضي سداسي", "جـ- مصدر سداسي"], a: 2 },
+        { q: "المصدر من الفعل أعاد:", opts: ["أ- أعد", "ب- إعادة", "جـ- وعد"], a: 1 },
+        { q: "نوع المتمم المنصوب في جملة حفظت القرآن ليلة العيد:", opts: ["أ- مفعول لأجله", "ب- مفعول مطلق", "جـ- مفعول فيه"], a: 2 },
+        { q: "أكملي الجملة بالشكل الصحيح: كافأت الشركة ............", opts: ["أ- أبو العامل", "ب- أبا العامل", "جـ- أبي العامل"], a: 1 },
+        { q: "(المضاف) في جملة كن عالماً أو طالب علم:", opts: ["أ- عالماً", "ب- علم", "جـ- طالب"], a: 2 },
+        { q: "وصلت إلى ............ متأخراً:", opts: ["أ- المطارِ", "ب- المطارُ", "جـ- المطارَ"], a: 0 },
+        { q: "هاجر النبي بصحبة ....... المضاف إليه المناسب هو:", opts: ["أ- أبا بكر", "ب- أبي بكر", "جـ- أبو بكر"], a: 1 },
+        { q: "سبب منع حضرموت من الصرف أنها:", opts: ["أ- علم أعجمي", "ب- علم يشبه الفعل", "جـ- مركب تركيب مزجي"], a: 2 },
+        { q: "وقف الحاضرون متفرجين، ما تحته خط هنا هو:", opts: ["أ- حال", "ب- تمييز", "جـ- مفعول به"], a: 0 },
         
-        const zone = document.getElementById('end-zone');
-        const banner = document.getElementById('winner-banner');
-        zone.style.display = 'block';
-
-        confetti({ particleCount: 200, spread: 90, origin: { y: 0.5 } });
-
-        if (pts1 > pts2) {
-            banner.innerHTML = `🏆 الفائز بالصدارة والمجد: <span style="color:var(--team1-color)">الفريق الأول</span> بـ ${pts1} نقطة!`;
-        } else if (pts2 > pts1) {
-            banner.innerHTML = `🏆 الفائز بالصدارة والمجد: <span style="color:var(--team2-color)">الفريق الثاني</span> بـ ${pts2} نقطة!`;
-        } else {
-            banner.innerHTML = `🤝 تعادل أسطوري ومذهل بـ ${pts1} لكل فريق!`;
-        }
-    }
-</script>
-
-</body>
-</html>
+        // الأسئلة الجديدة المضافة (صح أم خطأ)
+        { q: "المفعول المطلق هو مصدر منصوب يذكر لتوكيد الفعل أو بيان نوعه أو عدده.", opts: ["صح 👍", "خطأ 👎"], a: 0 },
+        { q: "كلمة (أخذ) تبدأ بهمزة وصل لأنها فعل ماضٍ ثلاثي.", opts: ["صح 👍", "خطأ 👎 (تبدأ بهمزة قطع)"], a: 1 },
+        { q: "من الأسماء السماعية كلمة اثنان وهمزتها همزة وصل.", opts:
